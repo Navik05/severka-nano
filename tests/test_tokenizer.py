@@ -1,5 +1,6 @@
 from severka.tokenizer import CharTokenizer
 
+
 def test_fit_is_sorted():
     vocab = CharTokenizer.fit("гвба").vocab
     assert vocab == sorted(vocab)
