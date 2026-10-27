@@ -31,7 +31,24 @@ def test_decode_unknown_token():
     with pytest.raises(KeyError):
         tok.decode([99])
 
-def test_round_code():
+def test_code_round():
     text = "привет, мир!\n  Палка123"
     tok = CharTokenizer.fit(text)
     assert tok.decode(tok.encode(text)) == text
+
+def test_save_load_round(tmp_path):
+    tok = CharTokenizer.fit("слово дня")
+    path = tmp_path / "tok.json"
+    tok.save(path)
+    tok2 = CharTokenizer.load(path)
+    assert tok.vocab == tok2.vocab
+    assert tok.encode("слово") == tok2.encode("слово")
+    assert tok.decode([0,2,1]) == tok2.decode([0,2,1])
+
+def test_save_is_utf8(tmp_path):
+    """Файл записан как utf-8"""
+    tok = CharTokenizer.fit(" слово")
+    path = tmp_path / "tok.json"
+    tok.save(path)
+    raw = path.read_text(encoding="utf-8")
+    assert " " in raw
