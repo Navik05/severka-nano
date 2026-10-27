@@ -25,3 +25,13 @@ def test_encode_unknown_token():
     tok = CharTokenizer(["а", "б", "в"])
     with pytest.raises(KeyError):
         tok.encode("г")
+
+def test_decode_unknown_token():
+    tok = CharTokenizer(["а", "б", "в"])
+    with pytest.raises(KeyError):
+        tok.decode([99])
+
+def test_round_code():
+    text = "привет, мир!\n  Палка123"
+    tok = CharTokenizer.fit(text)
+    assert tok.decode(tok.encode(text)) == text
