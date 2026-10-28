@@ -1,6 +1,8 @@
 import pytest
+import torch
 
-from severka.data import load_text, split_text
+from severka.data import encode_text, load_text, split_text
+from severka.tokenizer import CharTokenizer
 
 
 def test_load_text(tmp_path):
@@ -28,3 +30,26 @@ def test_split_text():
 def test_split_invalid(bad):
     with pytest.raises(ValueError):
         split_text("абвгдеёжзи", bad)
+
+def test_encode_text():
+    tok = CharTokenizer(["а", "б", "в"])
+    ids = encode_text("абв", tok)
+    assert ids.shape == (3,)
+    assert ids.dtype == torch.long
+    assert ids.tolist() == [0, 1, 2]
+
+def test_encode_text_roundtrip():
+    text = "привет, мир!\n"
+    tok = CharTokenizer.fit(text)
+    assert tok.decode(encode_text(text, tok).tolist()) == text
+
+def test_encode_empty():
+    tok = CharTokenizer(["а"])
+    ids = encode_text("", tok)
+    assert ids.shape == (0,)
+    assert ids.dtype == torch.long
+
+def test_encode_unknown_char():
+    tok = CharTokenizer(["а", "б"])
+    with pytest.raises(KeyError):
+        encode_text("в", tok)

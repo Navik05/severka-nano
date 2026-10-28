@@ -1,5 +1,9 @@
 from pathlib import Path
 
+import torch
+
+from severka.tokenizer import CharTokenizer
+
 
 def load_text(path: Path) -> str:
     """Читает текст в utf-8"""
@@ -13,3 +17,7 @@ def split_text(text: str, val_part: float = 0.1) -> tuple[str, str]:
 
     n = int(len(text) * (1 - val_part))
     return text[:n], text[n:]
+
+def encode_text(text: str, tokenizer: CharTokenizer) -> torch.Tensor:
+    """Кодирует текст в одномерный тензор"""
+    return torch.tensor(tokenizer.encode(text), dtype=torch.long)
