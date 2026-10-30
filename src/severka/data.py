@@ -29,7 +29,7 @@ def get_batch(
         batch_size: int,
         generator: torch.Generator | None = None,
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    """Возвращает случайные пары (x, y) для обучения"""
+    """Возвращает случайные пары (inputs, targets) для обучения"""
     if not data.ndim == 1:
         raise ValueError("data должен быть одномерным тензором")
     if not (block_size > 0 and batch_size > 0):
