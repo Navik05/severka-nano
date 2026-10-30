@@ -7,9 +7,11 @@ class CharTokenizer:
     """Сопоставит каждому символу id"""
 
     def __init__(self, vocab: list[str]) -> None:
+        if len(vocab) != len(set(vocab)):
+            raise ValueError("Словарь содержит дубликаты")
         self.vocab: list[str] = list(vocab)
         self.stoi: dict[str, int] = {token: i for i, token in enumerate(self.vocab)}
-        self.itos: dict[int, str] = {id: token for id, token in enumerate(self.vocab)}
+        self.itos: list[str] = list(vocab)
 
     def __len__(self) -> int:
         return len(self.vocab)
@@ -29,7 +31,7 @@ class CharTokenizer:
 
     def save(self, path: Path) -> None:
         """Сохраняет словарь в json файл"""
-        path.write_text( json.dumps(self.vocab, ensure_ascii=False), encoding="utf-8" )
+        path.write_text(json.dumps(self.vocab, ensure_ascii=False), encoding="utf-8" )
 
     @classmethod
     def load(cls, path: Path) -> CharTokenizer:

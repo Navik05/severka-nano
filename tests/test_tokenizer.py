@@ -28,7 +28,7 @@ def test_encode_unknown_token():
 
 def test_decode_unknown_token():
     tok = CharTokenizer(["а", "б", "в"])
-    with pytest.raises(KeyError):
+    with pytest.raises(IndexError):
         tok.decode([99])
 
 def test_code_round():
@@ -52,3 +52,8 @@ def test_save_is_utf8(tmp_path):
     tok.save(path)
     raw = path.read_text(encoding="utf-8")
     assert " " in raw
+
+def test_init_raises_on_duplicate_tokens():
+    """Словарь с дубликатами, ошибка может выскочить при загрузке ломаного json"""
+    with pytest.raises(ValueError, match="дубликаты"):
+        CharTokenizer(["a", "b", "a"])
