@@ -43,3 +43,58 @@ class BigramLanguageModel(nn.Module):
                 targets.reshape(-1),
             )
         return logits, loss
+
+    @torch.no_grad()
+    def generate(
+            self,
+            inputs: torch.Tensor,
+            max_new_tokens: int,
+            block_size: int,
+            temperature: float = 1.0,
+    ) -> torch.Tensor:
+        """Достраивает последовательность inputs на max_new_tokens токенов.
+
+        Args:
+            inputs: тензор индексов токенов формы (batch_size, sequence_length),
+                    где sequence_length - текущая длина последовательности.
+            max_new_tokens: количество новых токенов, которое необходимо сгенерировать и добавить к inputs.
+            block_size: максимальный размер контекста, который модель может обработать за раз.
+            temperature: коэффициент масштабирования логитов (logits) регулирующий случайность генерации.
+                    =0 - жадный выбор, всегда самый вероятный токен; temperature > 0 - сэмплирование.
+        Returns:
+            torch.Tensor: тензор индексов токенов формы (batch_size, sequence_length + max_new_tokens),
+                          содержащий исходную последовательность вместе со сгенерированными токенами.
+
+        """ # noqa: E501
+        if inputs.ndim != 2:
+            raise ValueError("inputs должен иметь форму (batch_size, sequence_length)")
+        if inputs.size(1) == 0:
+            raise ValueError("inputs не должен быть пустым: нужен хотя бы один токен")
+        if temperature < 0:
+            raise ValueError("temperature должна быть >= 0")
+        if max_new_tokens < 0:
+            raise ValueError("max_new_tokens должен быть >= 0")
+        if block_size <= 0:
+            raise ValueError("block_size должен быть > 0")
+
+        for _ in range(max_new_tokens):
+            # Вырезаем последний контекст, который модель способна вместить
+            inputs_block = inputs[:, -block_size:]
+            # Получаем предсказания модели
+            logits, _ = self(inputs_block)
+            # Берем логиты самого последнего токена
+            logits = logits[:, -1, :]
+
+            # Выбираем следующий токен в зависимости от температуры
+            if temperature == 0:
+                # Жадный выбор (самый вероятный токен)
+                inputs_next = torch.argmax(logits, dim=-1, keepdim=True)
+            else:
+                # Температурное сэмплирование
+                probabilities = F.softmax(logits / temperature, dim=-1)
+                inputs_next = torch.multinomial(probabilities, num_samples=1)
+
+            # Приклеиваем токен к общей истории
+            inputs = torch.cat((inputs, inputs_next), dim=1)
+
+        return inputs
